@@ -1,0 +1,17 @@
+# Proxmox API details
+host: proxmox.example.com
+user: api@pve
+password: verysecure
+
+# Current = Determine load based on current resource usage
+# Max = Determine load based on maximum assigned resource
+method: current
+
+# Maximum allowed imbalance over the cluster, measured in points.
+# Decrease this to move VMs more often, increase for larger clusters.
+allowed_disparity: 20
+
+# Separation rules, keep VMs separate.
+rules:
+  separate:
+    - myvm1,myvm2,myvm3

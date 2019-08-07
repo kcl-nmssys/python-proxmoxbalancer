@@ -1,0 +1,4 @@
+proxmoxer ~= 1.0.3
+requests
+paramiko
+pyyaml

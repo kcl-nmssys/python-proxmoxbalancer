@@ -125,30 +125,47 @@ class ProxmoxBalance:
         return candidate_host
 
     # Runs a balance pass over the node list.
-    def balance_pass(self):
+    def rule_pass(self):
         operations = []
-        rules = self.config['rules']
-
-        # Order vm_list.
-        self.vm_list.sort(key=operator.itemgetter('points'))
-        self.vm_list.reverse()
 
         # List of vms to keep separate.
+        rules = self.config['rules']
+        separate = [rule.split(',') for rule in rules['separate']]
+
+        # Loop through every VM, check for rule violations.
+        for node_name in self.node_list:
+            for vm_name in self.node_list[node_name]['vms']:
+                # First, check we're abiding by the rules.
+                rule = self.get_rule(separate, vm_name)
+                if rule and self.should_separate(rule, vm_name, self.node_list[node_name]['vms']):
+                    print("Rule violation for vm %s" % vm_name)
+                    target = self.separate(rule, vm_name, self.node_list[node_name]['vms'])
+
+                if target:
+                    operations.append({
+                        'vm_name': vm_name,
+                        'host': node_name,
+                        'target': target
+                    })
+
+                    self.node_list[target]['vms'][vm_name] = self.node_list[node_name]['vms'][vm_name]
+
+        return operations
+
+    # Runs a balance pass over the node list.
+    def balance_pass(self):
+        operations = []
+
+        # List of vms to keep separate.
+        rules = self.config['rules']
         separate = [rule.split(',') for rule in rules['separate']]
 
         # Loop through every VM, if we find one that we can migrate to another host without
         # making that hosts' total points greater than our own, do that.
         for node_name in self.node_list:
             for vm_name in self.node_list[node_name]['vms']:
-                # First, check we're abiding by the rules.
-                rule = self.get_rule(separate, vm_name)
-                # TODO: move to pre-balance pass.
-                if rule and self.should_separate(rule, vm_name, self.node_list[node_name]['vms']):
-                    print("Rule violation for vm %s" % vm_name)
-                    target = self.separate(rule, vm_name, self.node_list[node_name]['vms'])
-                else:
-                    points = self.node_list[node_name]['vms'][vm_name]['points']
-                    target = self.calculate_best_host(node_name, vm_name, points, separate)
+                points = self.node_list[node_name]['vms'][vm_name]['points']
+                target = self.calculate_best_host(node_name, vm_name, points, separate)
 
                 if target:
                     operations.append({
@@ -159,7 +176,6 @@ class ProxmoxBalance:
 
                     self.node_list[node_name]['used_points'] -= points
                     self.node_list[target]['used_points'] += points
-                    self.node_list[target]['vms'][vm_name] = self.node_list[node_name]['vms'][vm_name]
 
         return operations
 
@@ -216,6 +232,10 @@ class ProxmoxBalance:
                         'points': points,
                     })
 
+        # Order vm_list.
+        self.vm_list.sort(key=operator.itemgetter('points'))
+        self.vm_list.reverse()
+
 
     def balance(self):
         # First get the current list of hosts and VMs.
@@ -229,6 +249,13 @@ class ProxmoxBalance:
             # Now, we need to spread the load.
             # We're going to work out how to best spread out with the minimal number of migrations.
             self.pretty_print_points()
+
+            # Fix rule violations, then balance.
+            operations = self.rule_pass()
+            for operation in operations:
+                self.run_migrate(operation)
+
+            self.regenerate_lists()
 
             # Okay, this is not optimal. When we get more than the hour I've given myself for this we
             # can use some fancy balancing graph, but for now, we will just move a few things to try and balance it.

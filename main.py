@@ -281,7 +281,7 @@ class ProxmoxBalance:
             # can use some fancy balancing graph, but for now, we will just move a few things to try and balance it.
             operations = self.balance_pass()
             for operation in operations:
-                self.run_migrate(operation, wait=self.config['async'])
+                self.run_migrate(operation, wait=!self.config['async'])
 
             # Now, we need to spread the load.
             # We're going to work out how to best spread out with the minimal number of migrations.

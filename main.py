@@ -138,17 +138,17 @@ class ProxmoxBalance:
                 # First, check we're abiding by the rules.
                 rule = self.get_rule(separate, vm_name)
                 if rule and self.should_separate(rule, vm_name, self.node_list[node_name]['vms']):
-                    print("Rule violation for vm %s" % vm_name)
+                    print("Rule violation detected for vm %s" % vm_name)
                     target = self.separate(rule, vm_name, self.node_list[node_name]['vms'])
 
-                if target:
-                    operations.append({
-                        'vm_name': vm_name,
-                        'host': node_name,
-                        'target': target
-                    })
+                    if target:
+                        operations.append({
+                            'vm_name': vm_name,
+                            'host': node_name,
+                            'target': target
+                        })
 
-                    self.node_list[target]['vms'][vm_name] = self.node_list[node_name]['vms'][vm_name]
+                        self.node_list[target]['vms'][vm_name] = self.node_list[node_name]['vms'][vm_name]
 
         return operations
 

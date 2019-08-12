@@ -189,9 +189,12 @@ class ProxmoxBalance:
             'target': target,
             'online': 1,
         }
-        print("Moving %s from %s to %s" % (vm_name, host, target))
         if not self.dry:
-            self.proxmox.nodes(host).qemu(vmid).migrate.post(**data)
+            taskid = self.proxmox.nodes(host).qemu(vmid).migrate.post(**data)
+            # TODO: add option to wait proxmox.nodes(node_name).tasks(taskid).status
+            print("Moving %s from %s to %s (%s)" % (vm_name, host, target, taskid))
+        else:
+            print("Would move %s from %s to %s" % (vm_name, host, target))
 
     # Pretty print the points used.
     def pretty_print_points(self):
@@ -252,10 +255,11 @@ class ProxmoxBalance:
 
             # Fix rule violations, then balance.
             operations = self.rule_pass()
-            for operation in operations:
-                self.run_migrate(operation)
-
-            self.regenerate_lists()
+            if len(operations) > 0:
+                for operation in operations:
+                    self.run_migrate(operation)
+                print("Had to migrate VMs due to rules violations. Wait for those to finish first, then run again.")
+                return
 
             # Okay, this is not optimal. When we get more than the hour I've given myself for this we
             # can use some fancy balancing graph, but for now, we will just move a few things to try and balance it.

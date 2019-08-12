@@ -4,10 +4,11 @@
 # Author: Skylar Kelty
 #
 
-import sys
-import yaml
 import argparse
 import operator
+import sys
+import time
+import yaml
 from proxmoxer import ProxmoxAPI
 
 class ProxmoxBalance:
@@ -34,6 +35,8 @@ class ProxmoxBalance:
                     config['allowed_disparity'] = 20
                 if 'rules' not in config:
                     config['rules'] = {}
+                if 'async' not in config:
+                    config['async'] = True
                 if 'separate' not in config['rules']:
                     config['rules']['separate'] = {}
             except yaml.YAMLError as exc:
@@ -278,7 +281,7 @@ class ProxmoxBalance:
             # can use some fancy balancing graph, but for now, we will just move a few things to try and balance it.
             operations = self.balance_pass()
             for operation in operations:
-                self.run_migrate(operation)
+                self.run_migrate(operation, wait=self.config['async'])
 
             # Now, we need to spread the load.
             # We're going to work out how to best spread out with the minimal number of migrations.

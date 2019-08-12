@@ -11,6 +11,9 @@ method: current
 # Decrease this to move VMs more often, increase for larger clusters.
 allowed_disparity: 20
 
+# Run multiple migration tasks asynchronously?
+async: true
+
 # Separation rules, keep VMs separate.
 rules:
   separate:

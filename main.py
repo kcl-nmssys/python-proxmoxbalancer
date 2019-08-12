@@ -92,6 +92,38 @@ class ProxmoxBalance:
                 new_host_points = new_points
         return new_host
 
+    def get_rule(self, separate, vm_name):
+        for rule in separate:
+            for vm in rule:
+                if vm == vm_name:
+                    return rule
+
+    # Should we separate this VM out from its current host?
+    def should_separate(self, rule, vm_name, node_vms):
+        other_vms = [x for x in rule if x != vm_name]
+        return any(item in other_vms for item in node_vms)
+
+    # Keep separated VMs apart at all costs.
+    def separate(self, rule, vm_name, node_vms):
+        other_vms = [x for x in rule if x != vm_name]
+        candidates = [x for x in self.node_list if not any(item in other_vms for item in self.node_list[x]['vms'])]
+        if len(candidates) <= 0:
+            print("No suitable candidate host found for %s, perhaps you need more hosts." % vm_name)
+
+        lowest_point_score = 0
+        candidate_host = 0
+
+        # Pick the candidate with the lowest point score.
+        for candidate in candidates:
+            if candidate_host == 0:
+                candidate_host = candidate
+                lowest_point_score = self.node_list[candidate]['points']
+            if self.node_list[candidate]['points'] > lowest_point_score:
+                candidate_host = candidate
+                lowest_point_score = self.node_list[candidate]['points']
+
+        return candidate_host
+
     # Runs a balance pass over the node list.
     def balance_pass(self):
         operations = []
@@ -108,8 +140,16 @@ class ProxmoxBalance:
         # making that hosts' total points greater than our own, do that.
         for node_name in self.node_list:
             for vm_name in self.node_list[node_name]['vms']:
-                points = self.node_list[node_name]['vms'][vm_name]['points']
-                target = self.calculate_best_host(node_name, vm_name, points, separate)
+                # First, check we're abiding by the rules.
+                rule = self.get_rule(separate, vm_name)
+                # TODO: move to pre-balance pass.
+                if rule and self.should_separate(rule, vm_name, self.node_list[node_name]['vms']):
+                    print("Rule violation for vm %s" % vm_name)
+                    target = self.separate(rule, vm_name, self.node_list[node_name]['vms'])
+                else:
+                    points = self.node_list[node_name]['vms'][vm_name]['points']
+                    target = self.calculate_best_host(node_name, vm_name, points, separate)
+
                 if target:
                     operations.append({
                         'vm_name': vm_name,
@@ -119,6 +159,7 @@ class ProxmoxBalance:
 
                     self.node_list[node_name]['used_points'] -= points
                     self.node_list[target]['used_points'] += points
+                    self.node_list[target]['vms'][vm_name] = self.node_list[node_name]['vms'][vm_name]
 
         return operations
 

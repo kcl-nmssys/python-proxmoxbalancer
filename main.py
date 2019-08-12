@@ -179,8 +179,20 @@ class ProxmoxBalance:
 
         return operations
 
+    # Return the status of a given task.
+    def task_status(self, host, taskid):
+        task = self.proxmox.nodes(host).tasks("UPID:%s" % taskid).status.get()
+        if task and status in task:
+            return task['status']
+        return 'Unknown Task'
+
+    # Wait for a given to task to complete (or fail).
+    def wait_for_task(self, host, taskid):
+        while self.task_status(host, taskid) == 'running':
+            time.sleep(1)
+
     # Actually migrate a VM.
-    def run_migrate(self, operation):
+    def run_migrate(self, operation, wait=False):
         vm_name = operation['vm_name']
         host = operation['host']
         target = operation['target']
@@ -190,9 +202,10 @@ class ProxmoxBalance:
             'online': 1,
         }
         if not self.dry:
+            print("Moving %s from %s to %s" % (vm_name, host, target))
             taskid = self.proxmox.nodes(host).qemu(vmid).migrate.post(**data)
-            # TODO: add option to wait proxmox.nodes(node_name).tasks(taskid).status
-            print("Moving %s from %s to %s (%s)" % (vm_name, host, target, taskid))
+            if wait:
+                self.wait_for_task(host, taskid)
         else:
             print("Would move %s from %s to %s" % (vm_name, host, target))
 
@@ -255,11 +268,11 @@ class ProxmoxBalance:
 
             # Fix rule violations, then balance.
             operations = self.rule_pass()
-            if len(operations) > 0:
-                for operation in operations:
-                    self.run_migrate(operation)
-                print("Had to migrate VMs due to rules violations. Wait for those to finish first, then run again.")
-                return
+            for operation in operations:
+                self.run_migrate(operation, wait=True)
+
+            # Get a new list of hosts and VMs.
+            self.regenerate_lists()
 
             # Okay, this is not optimal. When we get more than the hour I've given myself for this we
             # can use some fancy balancing graph, but for now, we will just move a few things to try and balance it.

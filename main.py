@@ -184,8 +184,8 @@ class ProxmoxBalance:
 
     # Return the status of a given task.
     def task_status(self, host, taskid):
-        task = self.proxmox.nodes(host).tasks("UPID:%s" % taskid).status.get()
-        if task and status in task:
+        task = self.proxmox.nodes(host).tasks(taskid).status.get()
+        if task and 'status' in task:
             return task['status']
         return 'Unknown Task'
 

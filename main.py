@@ -167,7 +167,10 @@ class ProxmoxBalance:
         # making that hosts' total points greater than our own, do that.
         for node_name in self.node_list:
             for vm_name in self.node_list[node_name]['vms']:
-                points = self.node_list[node_name]['vms'][vm_name]['points']
+                vm = self.node_list[node_name]['vms'][vm_name]
+                if vm['status'] == 'stopped':
+                    continue
+                points = vm['points']
                 target = self.calculate_best_host(node_name, vm_name, points, separate)
 
                 if target:

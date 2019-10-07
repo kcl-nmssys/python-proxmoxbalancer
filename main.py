@@ -6,6 +6,7 @@
 
 import argparse
 import operator
+import os
 import sys
 import time
 import yaml
@@ -26,7 +27,7 @@ class ProxmoxBalance:
         self.dry = args.dry
 
         # Read config, sanitize, fire up the API.
-        with open('config.yaml', 'r') as stream:
+        with open(os.path.dirname(__file__) + '/config.yaml', 'r') as stream:
             try:
                 config = yaml.safe_load(stream)
                 if 'method' not in config:

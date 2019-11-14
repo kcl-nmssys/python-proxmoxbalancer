@@ -1,3 +1,5 @@
+infra_lock_file: /tmp/infmgr.lock
+
 # Proxmox API details
 host: proxmox.example.com
 user: api@pve

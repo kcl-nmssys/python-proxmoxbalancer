@@ -5,6 +5,7 @@
 #
 
 import argparse
+import locket
 import operator
 import os
 import sys
@@ -261,37 +262,38 @@ class ProxmoxBalance:
 
 
     def balance(self):
-        # First get the current list of hosts and VMs.
-        self.regenerate_lists()
-
-        # Okay, work out the imbalance here and run migrations.
-        total_disparity = self.calculate_imbalance()
-        if total_disparity > (len(self.node_list) * self.config['allowed_disparity']):
-            print("Running Balance%s..." % (' (dry mode)' if self.dry else ''))
-
-            # Now, we need to spread the load.
-            # We're going to work out how to best spread out with the minimal number of migrations.
-            self.pretty_print_points()
-
-            # Fix rule violations, then balance.
-            operations = self.rule_pass()
-            for operation in operations:
-                self.run_migrate(operation, wait=True)
-
-            # Get a new list of hosts and VMs.
+        with locket.lock_file(self.config['infra_lock_file'], timeout=120):
+            # First get the current list of hosts and VMs.
             self.regenerate_lists()
 
-            # Okay, this is not optimal. When we get more than the hour I've given myself for this we
-            # can use some fancy balancing graph, but for now, we will just move a few things to try and balance it.
-            operations = self.balance_pass()
-            for operation in operations:
-                self.run_migrate(operation, wait=(not self.config['async']))
+            # Okay, work out the imbalance here and run migrations.
+            total_disparity = self.calculate_imbalance()
+            if total_disparity > (len(self.node_list) * self.config['allowed_disparity']):
+                print("Running Balance%s..." % (' (dry mode)' if self.dry else ''))
 
-            # Now, we need to spread the load.
-            # We're going to work out how to best spread out with the minimal number of migrations.
-            self.pretty_print_points()
-        else:
-            print('Acceptable overall imbalance, not running balance.')
+                # Now, we need to spread the load.
+                # We're going to work out how to best spread out with the minimal number of migrations.
+                self.pretty_print_points()
+
+                # Fix rule violations, then balance.
+                operations = self.rule_pass()
+                for operation in operations:
+                    self.run_migrate(operation, wait=True)
+
+                # Get a new list of hosts and VMs.
+                self.regenerate_lists()
+
+                # Okay, this is not optimal. When we get more than the hour I've given myself for this we
+                # can use some fancy balancing graph, but for now, we will just move a few things to try and balance it.
+                operations = self.balance_pass()
+                for operation in operations:
+                    self.run_migrate(operation, wait=(not self.config['async']))
+
+                # Now, we need to spread the load.
+                # We're going to work out how to best spread out with the minimal number of migrations.
+                self.pretty_print_points()
+            else:
+                print('Acceptable overall imbalance, not running balance.')
 
 balancer = ProxmoxBalance()
 balancer.balance()

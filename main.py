@@ -24,11 +24,16 @@ class ProxmoxBalance:
         # Read args.
         parser = argparse.ArgumentParser()
         parser.add_argument('-d', '--dry', action='store_true')
+        parser.add_argument('-c', '--config', default=os.path.dirname(os.path.abspath(__file__)) + '/config.yaml')
         args = parser.parse_args()
         self.dry = args.dry
 
+        if not os.path.exists(args.config):
+            sys.stderr.write('Cannot find config file\n')
+            sys.exit(1)
+
         # Read config, sanitize, fire up the API.
-        with open(os.path.dirname(os.path.abspath(__file__)) + '/config.yaml', 'r') as stream:
+        with open(args.config, 'r') as stream:
             try:
                 config = yaml.safe_load(stream)
                 if 'method' not in config:

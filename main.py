@@ -240,6 +240,10 @@ class ProxmoxBalance:
     def regenerate_lists(self):
         for node in self.proxmox.nodes.get():
             node_name = node['node']
+
+            if node_name == 'nms-pve-str3':
+                continue
+
             self.node_list[node_name] = node
             self.node_list[node_name]['vms'] = {}
 

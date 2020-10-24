@@ -5,6 +5,7 @@
 #
 
 import argparse
+import datetime
 import locket
 import operator
 import os
@@ -302,5 +303,7 @@ class ProxmoxBalance:
             else:
                 print('Acceptable overall imbalance, not running balance.')
 
+print("Started at %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 balancer = ProxmoxBalance()
 balancer.balance()
+print("Finished at %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

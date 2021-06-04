@@ -303,8 +303,9 @@ class ProxmoxBalance:
             else:
                 print('Acceptable overall imbalance, not running balance.')
 
-print("Started at %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-del(os.environ['https_proxy']) # crontab has this for other scripts
-balancer = ProxmoxBalance()
-balancer.balance()
-print("Finished at %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+if __name__ == "__main__":
+    print("Started at %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    del(os.environ['https_proxy']) # crontab has this for other scripts
+    balancer = ProxmoxBalance()
+    balancer.balance()
+    print("Finished at %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

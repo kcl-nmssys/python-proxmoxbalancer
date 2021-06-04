@@ -31,4 +31,4 @@ before_script:
 Python Code Lint:
   stage: lint
   script:
-    - poetry run black ./makeitso
+    - poetry run black ./proxmoxbalancer

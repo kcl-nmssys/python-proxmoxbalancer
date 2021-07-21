@@ -59,7 +59,7 @@ class ProxmoxBalancer:
 
         self.config = config
         self.proxclient = ProxmoxClient(config['pve_cluster'])
-        self.proxmox = pc.client
+        self.proxmox = self.proxclient.client
 
     # Get various useful sum.
     def get_totals(self):

@@ -1,9 +1,7 @@
 infra_lock_file: /tmp/infmgr.lock
 
-# Proxmox API details
-host: proxmox.example.com
-user: api@pve
-password: verysecure
+# Cluster to connect to.
+pve_cluster: slough
 
 # Current = Determine load based on current resource usage
 # Max = Determine load based on maximum assigned resource

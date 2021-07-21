@@ -12,7 +12,8 @@ import os
 import sys
 import time
 import yaml
-from proxmoxer import ProxmoxAPI
+
+from sci_common.proxmox import ProxmoxClient
 
 
 class ProxmoxBalancer:
@@ -57,13 +58,8 @@ class ProxmoxBalancer:
                 sys.exit(1)
 
         self.config = config
-        self.proxmox = ProxmoxAPI(
-            config["host"],
-            user=config["user"],
-            password=config["password"],
-            backend="https",
-            verify_ssl=False,
-        )
+        self.proxclient = ProxmoxClient(config['pve_cluster'])
+        self.proxmox = pc.client
 
     # Get various useful sum.
     def get_totals(self):

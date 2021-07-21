@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "proxmoxbalancer"
-version = "1.1.0"
+version = "1.2.0"
 description = "VM balancer"
 authors = ["Skylar Kelty <skylar.kelty@kcl.ac.uk>"]
 license = "MIT"
@@ -12,6 +12,7 @@ locket = "^0.2.1"
 requests = "^2.25.1"
 paramiko = "^2.7.2"
 PyYAML = "^5.4.1"
+sci-common = "^0.6.1"
 
 [tool.poetry.dev-dependencies]
 Sphinx = "^3.4.3"
@@ -27,4 +28,9 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-balance = 'proxmoxbalancer:balance'
+pvebalance = 'proxmoxbalancer:balance'
+
+[[tool.poetry.source]]
+name = "py-sci-common"
+url = "https://gitlab.er.kcl.ac.uk/api/v4/projects/18/packages/pypi/simple"
+secondary = true

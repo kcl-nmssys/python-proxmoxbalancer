@@ -30,7 +30,7 @@ class ProxmoxBalancer:
         parser.add_argument(
             "-c",
             "--config",
-            default=os.path.dirname(os.path.abspath(__file__)) + "/config.yaml",
+            default=os.path.dirname(os.path.abspath(__file__)) + "/../config.yaml",
         )
         args = parser.parse_args()
         self.dry = args.dry

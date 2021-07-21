@@ -13,6 +13,7 @@ requests = "^2.25.1"
 paramiko = "^2.7.2"
 PyYAML = "^5.4.1"
 sci-common = "^0.6.1"
+hvac = "0.10.7"
 
 [tool.poetry.dev-dependencies]
 Sphinx = "^3.4.3"

@@ -274,7 +274,7 @@ class ProxmoxBalancer:
                         print("  - Cannot enforce rule: node not in list")
 
                 # If we have to move, do.
-                if target:
+                if target and target != node_name:
                     operations.append(
                         {"vm_name": vm_name, "host": node_name, "target": target}
                     )

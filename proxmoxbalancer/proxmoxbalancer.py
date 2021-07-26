@@ -151,14 +151,14 @@ class ProxmoxBalancer:
         rules = self.config["rules"]
 
         # First, check if we are pinned to a host.
-        if 'pin' in rules:
+        if "pin" in rules:
             pinned = [rule.split(":") for rule in rules["pin"]]
             for rule in pinned:
                 if vm_name == rule[0]:
                     return {"type": "pinned", "node": rule[1]}
 
         # Now, see if we are separated from other VMs.
-        if 'separate' in rules:
+        if "separate" in rules:
             separate = [rule.split(",") for rule in rules["separate"]]
             for rule in separate:
                 for vm in rule:
@@ -166,7 +166,7 @@ class ProxmoxBalancer:
                         return {"type": "separate", "rule": rule}
 
         # Should we unite with another vm?
-        if 'unite' in rules:
+        if "unite" in rules:
             unite = [rule.split(",") for rule in rules["unite"]]
             for rule in unite:
                 for vm in rule:
@@ -249,13 +249,8 @@ class ProxmoxBalancer:
                 if rule["type"] == "unite" and self.should_unite(
                     rule["rule"], vm_name, self.node_list[node_name]["vms"]
                 ):
-                    print(
-                        "Rule violation detected for '%s': Unite violation"
-                        % vm_name
-                    )
-                    target = self.unite(
-                        rule["rule"], vm_name
-                    )
+                    print("Rule violation detected for '%s': Unite violation" % vm_name)
+                    target = self.unite(rule["rule"], vm_name)
 
                 # Deal with separation rules.
                 if rule["type"] == "separate" and self.should_separate(
@@ -265,9 +260,7 @@ class ProxmoxBalancer:
                         "Rule violation detected for '%s': Separation violation"
                         % vm_name
                     )
-                    target = self.separate(
-                        rule["rule"], vm_name
-                    )
+                    target = self.separate(rule["rule"], vm_name)
 
                 # Deal with pinning rules.
                 if rule["type"] == "pinned" and rule["node"] != node_name:

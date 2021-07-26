@@ -100,6 +100,11 @@ class ProxmoxBalancer:
 
     # Work out the best host for a given VM.
     def calculate_best_host(self, current_node, vm_name, points, separate):
+        # List of vms to keep separate.
+        rules = self.config["rules"]
+        separate = [rule.split(",") for rule in rules["separate"]]
+
+        # Begin calculations.
         (
             total_disparity,
             total_nodes,
@@ -231,19 +236,18 @@ class ProxmoxBalancer:
     def balance_pass(self):
         operations = []
 
-        # List of vms to keep separate.
-        rules = self.config["rules"]
-        separate = [rule.split(",") for rule in rules["separate"]]
-
         # Loop through every VM, if we find one that we can migrate to another host without
         # making that hosts' total points greater than our own, do that.
         for node_name in self.node_list:
             for vm_name in self.node_list[node_name]["vms"]:
                 vm = self.node_list[node_name]["vms"][vm_name]
-                if vm["status"] == "stopped":
+
+                # Can we action this host?
+                if vm["status"] == "stopped" or self.is_pinned(vm_name):
                     continue
+
                 points = vm["points"]
-                target = self.calculate_best_host(node_name, vm_name, points, separate)
+                target = self.calculate_best_host(node_name, vm_name, points)
 
                 if target:
                     operations.append(

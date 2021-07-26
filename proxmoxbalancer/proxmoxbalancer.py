@@ -141,7 +141,7 @@ class ProxmoxBalancer:
         rules = self.config["rules"]
 
         # First, check if we are pinned to a host.
-        pinned = [rule.split(":") for rule in rules["pinned"]]
+        pinned = [rule.split(":") for rule in rules["pin"]]
         for rule in pinned:
             if vm_name == rule[0]:
                 return {"type": "pinned", "node": rule[1]}

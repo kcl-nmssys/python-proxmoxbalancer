@@ -132,11 +132,14 @@ class ProxmoxBalancer:
                 new_host_points = new_points
         return new_host
 
-    def get_rule(self, separate, vm_name):
+    def get_rule(self, vm_name):
+        rules = self.config["rules"]
+        separate = [rule.split(",") for rule in rules["separate"]]
+
         for rule in separate:
             for vm in rule:
                 if vm == vm_name:
-                    return rule
+                    return {'type': 'separate', 'rule': rule}
 
     # Should we separate this VM out from its current host?
     def should_separate(self, rule, vm_name, node_vms):
@@ -175,21 +178,17 @@ class ProxmoxBalancer:
     def rule_pass(self):
         operations = []
 
-        # List of vms to keep separate.
-        rules = self.config["rules"]
-        separate = [rule.split(",") for rule in rules["separate"]]
-
         # Loop through every VM, check for rule violations.
         for node_name in self.node_list:
             for vm_name in self.node_list[node_name]["vms"]:
                 # First, check we're abiding by the rules.
-                rule = self.get_rule(separate, vm_name)
-                if rule and self.should_separate(
-                    rule, vm_name, self.node_list[node_name]["vms"]
+                rule = self.get_rule(vm_name)
+                if rule['type'] == 'separate' and self.should_separate(
+                    rule['rule'], vm_name, self.node_list[node_name]["vms"]
                 ):
                     print("Rule violation detected for vm %s" % vm_name)
                     target = self.separate(
-                        rule, vm_name, self.node_list[node_name]["vms"]
+                        rule['rule'], vm_name, self.node_list[node_name]["vms"]
                     )
 
                     if target:

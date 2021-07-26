@@ -185,20 +185,13 @@ class ProxmoxBalancer:
         other_vms = [x for x in rule if x != vm_name]
         return any(item in other_vms for item in node_vms)
 
-    # Keep separated VMs apart at all costs.
-    def separate(self, rule, vm_name, node_vms):
+    # Should we unite this VM with friends?
+    def should_unite(self, rule, vm_name, node_vms):
         other_vms = [x for x in rule if x != vm_name]
-        candidates = [
-            x
-            for x in self.node_list
-            if not any(item in other_vms for item in self.node_list[x]["vms"])
-        ]
-        if len(candidates) <= 0:
-            print(
-                "No suitable candidate host found for %s, perhaps you need more hosts."
-                % vm_name
-            )
+        return not all(item in node_vms for item in other_vms)
 
+    # Given a list of candiate hosts, pick the one with the lowest score.
+    def get_lowest_candidate(self, candidates):
         lowest_point_score = 0
         candidate_host = 0
 
@@ -212,6 +205,31 @@ class ProxmoxBalancer:
                 lowest_point_score = self.node_list[candidate]["points"]
 
         return candidate_host
+
+    # Keep united VMs together at all costs.
+    def unite(self, rule, vm_name):
+        rule_vms = [x for x in rule]
+        candidates = [
+            x
+            for x in self.node_list
+            if any(item in rule_vms for item in self.node_list[x]["vms"])
+        ]
+        return self.get_lowest_candidate(candidates)
+
+    # Keep separated VMs apart at all costs.
+    def separate(self, rule, vm_name):
+        other_vms = [x for x in rule if x != vm_name]
+        candidates = [
+            x
+            for x in self.node_list
+            if not any(item in other_vms for item in self.node_list[x]["vms"])
+        ]
+        if len(candidates) <= 0:
+            print(
+                "No suitable candidate host found for %s, perhaps you need more hosts."
+                % vm_name
+            )
+        return self.get_lowest_candidate(candidates)
 
     # Runs a balance pass over the node list.
     def rule_pass(self):
@@ -227,6 +245,18 @@ class ProxmoxBalancer:
 
                 target = False
 
+                # Deal with unite rules.
+                if rule["type"] == "unite" and self.should_unite(
+                    rule["rule"], vm_name, self.node_list[node_name]["vms"]
+                ):
+                    print(
+                        "Rule violation detected for '%s': Unite violation"
+                        % vm_name
+                    )
+                    target = self.unite(
+                        rule["rule"], vm_name
+                    )
+
                 # Deal with separation rules.
                 if rule["type"] == "separate" and self.should_separate(
                     rule["rule"], vm_name, self.node_list[node_name]["vms"]
@@ -236,7 +266,7 @@ class ProxmoxBalancer:
                         % vm_name
                     )
                     target = self.separate(
-                        rule["rule"], vm_name, self.node_list[node_name]["vms"]
+                        rule["rule"], vm_name
                     )
 
                 # Deal with pinning rules.

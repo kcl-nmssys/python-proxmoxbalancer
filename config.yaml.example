@@ -18,6 +18,8 @@ async: true
 rules:
   separate:
     - myvm1,myvm2,myvm3
+  unite:
+    - myclingyvm1,myclingyvm2
   pin:
     - myvm4:pvenode1
     - myvm5:pvenode2

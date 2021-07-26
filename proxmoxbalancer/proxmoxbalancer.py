@@ -99,10 +99,15 @@ class ProxmoxBalancer:
         return total_disparity
 
     # Work out the best host for a given VM.
-    def calculate_best_host(self, current_node, vm_name, points, separate):
+    def calculate_best_host(self, current_node, vm_name):
         # List of vms to keep separate.
         rules = self.config["rules"]
         separate = [rule.split(",") for rule in rules["separate"]]
+        unite = [rule.split(",") for rule in rules["unite"]]
+
+        # Get points.
+        vm = self.node_list[current_node]["vms"][vm_name]
+        points = vm["points"]
 
         # Begin calculations.
         (
@@ -125,6 +130,11 @@ class ProxmoxBalancer:
                     for vm in rule:
                         if vm != vm_name and vm in self.node_list[node_name]["vms"]:
                             skip = True
+            for rule in unite:
+                if vm_name in rule:
+                    for vm in rule:
+                        if vm != vm_name and vm not in self.node_list[node_name]["vms"]:
+                            skip = True
             if skip:
                 continue
 
@@ -141,17 +151,27 @@ class ProxmoxBalancer:
         rules = self.config["rules"]
 
         # First, check if we are pinned to a host.
-        pinned = [rule.split(":") for rule in rules["pin"]]
-        for rule in pinned:
-            if vm_name == rule[0]:
-                return {"type": "pinned", "node": rule[1]}
+        if 'pin' in rules:
+            pinned = [rule.split(":") for rule in rules["pin"]]
+            for rule in pinned:
+                if vm_name == rule[0]:
+                    return {"type": "pinned", "node": rule[1]}
 
         # Now, see if we are separated from other VMs.
-        separate = [rule.split(",") for rule in rules["separate"]]
-        for rule in separate:
-            for vm in rule:
-                if vm == vm_name:
-                    return {"type": "separate", "rule": rule}
+        if 'separate' in rules:
+            separate = [rule.split(",") for rule in rules["separate"]]
+            for rule in separate:
+                for vm in rule:
+                    if vm == vm_name:
+                        return {"type": "separate", "rule": rule}
+
+        # Should we unite with another vm?
+        if 'unite' in rules:
+            unite = [rule.split(",") for rule in rules["unite"]]
+            for rule in unite:
+                for vm in rule:
+                    if vm == vm_name:
+                        return {"type": "unite", "rule": rule}
 
         return {}
 
@@ -255,7 +275,7 @@ class ProxmoxBalancer:
                     continue
 
                 points = vm["points"]
-                target = self.calculate_best_host(node_name, vm_name, points)
+                target = self.calculate_best_host(node_name, vm_name)
 
                 if target:
                     operations.append(

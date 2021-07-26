@@ -14,7 +14,7 @@ allowed_disparity: 20
 # Run multiple migration tasks asynchronously?
 async: true
 
-# Separation rules, keep VMs separate.
+# Balancer rules.
 rules:
   separate:
     - myvm1,myvm2,myvm3

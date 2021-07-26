@@ -225,6 +225,8 @@ class ProxmoxBalancer:
                 if "type" not in rule:
                     continue
 
+                target = False
+
                 # Deal with separation rules.
                 if rule["type"] == "separate" and self.should_separate(
                     rule["rule"], vm_name, self.node_list[node_name]["vms"]

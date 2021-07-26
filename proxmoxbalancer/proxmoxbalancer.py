@@ -134,12 +134,26 @@ class ProxmoxBalancer:
 
     def get_rule(self, vm_name):
         rules = self.config["rules"]
-        separate = [rule.split(",") for rule in rules["separate"]]
 
+        # First, check if we are pinned to a host.
+        pinned = [rule.split(":") for rule in rules["pinned"]]
+        for rule in pinned:
+            if vm_name == rule[0]:
+                return {'type': 'pinned', 'node': rule[1]}
+
+        # Now, see if we are separated from other VMs.
+        separate = [rule.split(",") for rule in rules["separate"]]
         for rule in separate:
             for vm in rule:
                 if vm == vm_name:
                     return {'type': 'separate', 'rule': rule}
+
+        return {}
+
+    # Is this host pinned?
+    def is_pinned(self, vm_name):
+        rule = self.get_rule(vm_name)
+        return 'type' in rule and rule['type'] == 'pinned':
 
     # Should we separate this VM out from its current host?
     def should_separate(self, rule, vm_name, node_vms):
@@ -183,22 +197,33 @@ class ProxmoxBalancer:
             for vm_name in self.node_list[node_name]["vms"]:
                 # First, check we're abiding by the rules.
                 rule = self.get_rule(vm_name)
+                if 'type' not in rule:
+                    continue
+
+                # Deal with pinning rules.
+                if rule['type'] == 'pinned' and rule['node'] != node_name:
+                    print("Rule violation detected for '%s': supposed to be pinned to host '%s'." % (vm_name, rule['node']))
+                    if rule['node'] in self.node_list:
+                        target = rule['node']
+                    else:
+                        print("  - Cannot enforce rule: node not in list")
+
+                # Deal with separation rules.
                 if rule['type'] == 'separate' and self.should_separate(
                     rule['rule'], vm_name, self.node_list[node_name]["vms"]
                 ):
-                    print("Rule violation detected for vm %s" % vm_name)
+                    print("Rule violation detected for '%s': Separation violation" % vm_name)
                     target = self.separate(
                         rule['rule'], vm_name, self.node_list[node_name]["vms"]
                     )
 
-                    if target:
-                        operations.append(
-                            {"vm_name": vm_name, "host": node_name, "target": target}
-                        )
+                # If we have to move, do.
+                if target:
+                    operations.append(
+                        {"vm_name": vm_name, "host": node_name, "target": target}
+                    )
 
-                        self.node_list[target]["vms"][vm_name] = self.node_list[
-                            node_name
-                        ]["vms"][vm_name]
+                    self.node_list[target]["vms"][vm_name] = self.node_list[node_name]["vms"][vm_name]
 
         return operations
 

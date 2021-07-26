@@ -225,17 +225,6 @@ class ProxmoxBalancer:
                 if "type" not in rule:
                     continue
 
-                # Deal with pinning rules.
-                if rule["type"] == "pinned" and rule["node"] != node_name:
-                    print(
-                        "Rule violation detected for '%s': supposed to be pinned to host '%s'."
-                        % (vm_name, rule["node"])
-                    )
-                    if rule["node"] in self.node_list:
-                        target = rule["node"]
-                    else:
-                        print("  - Cannot enforce rule: node not in list")
-
                 # Deal with separation rules.
                 if rule["type"] == "separate" and self.should_separate(
                     rule["rule"], vm_name, self.node_list[node_name]["vms"]
@@ -247,6 +236,17 @@ class ProxmoxBalancer:
                     target = self.separate(
                         rule["rule"], vm_name, self.node_list[node_name]["vms"]
                     )
+
+                # Deal with pinning rules.
+                if rule["type"] == "pinned" and rule["node"] != node_name:
+                    print(
+                        "Rule violation detected for '%s': supposed to be pinned to host '%s'."
+                        % (vm_name, rule["node"])
+                    )
+                    if rule["node"] in self.node_list:
+                        target = rule["node"]
+                    else:
+                        print("  - Cannot enforce rule: node not in list")
 
                 # If we have to move, do.
                 if target:

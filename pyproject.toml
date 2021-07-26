@@ -12,7 +12,6 @@ locket = "^0.2.1"
 requests = "^2.25.1"
 paramiko = "^2.7.2"
 PyYAML = "^5.4.1"
-sci-common = "^0.6.1"
 hvac = "0.10.7"
 
 [tool.poetry.dev-dependencies]
@@ -30,8 +29,3 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 pvebalance = 'proxmoxbalancer:balance'
-
-[[tool.poetry.source]]
-name = "py-sci-common"
-url = "https://gitlab.er.kcl.ac.uk/api/v4/projects/18/packages/pypi/simple"
-secondary = true

@@ -52,6 +52,8 @@ class ProxmoxBalancer:
                     config["async"] = True
                 if "separate" not in config["rules"]:
                     config["rules"]["separate"] = {}
+                if "port" not in config:
+                    config["port"] = 8006
             except yaml.YAMLError as exc:
                 print(exc)
                 sys.exit(1)
@@ -59,6 +61,7 @@ class ProxmoxBalancer:
         self.config = config
         self.proxmox = ProxmoxAPI(
             config["host"],
+            port=config["port"],
             user=config["user"],
             password=config["password"],
             backend="https",

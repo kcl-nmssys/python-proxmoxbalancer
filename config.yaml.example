@@ -2,6 +2,7 @@ infra_lock_file: /tmp/infmgr.lock
 
 # Proxmox API details
 host: proxmox.example.com
+# port: 8006
 user: api@pve
 password: verysecure
 

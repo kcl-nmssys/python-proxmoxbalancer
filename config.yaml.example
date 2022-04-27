@@ -6,6 +6,10 @@ host: proxmox.example.com
 user: api@pve
 password: verysecure
 
+# Use a token instead of a password for authentication
+# token_name: name
+# token_secret: 000-000-...
+
 # Current = Determine load based on current resource usage
 # Max = Determine load based on maximum assigned resource
 method: current

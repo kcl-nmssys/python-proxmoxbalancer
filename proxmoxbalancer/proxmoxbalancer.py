@@ -52,18 +52,33 @@ class ProxmoxBalancer:
                     config["async"] = True
                 if "separate" not in config["rules"]:
                     config["rules"]["separate"] = {}
+                if "port" not in config:
+                    config["port"] = 8006
             except yaml.YAMLError as exc:
                 print(exc)
                 sys.exit(1)
 
         self.config = config
-        self.proxmox = ProxmoxAPI(
-            config["host"],
-            user=config["user"],
-            password=config["password"],
-            backend="https",
-            verify_ssl=False,
-        )
+
+        if "token_name" in config and "token_secret" in config:
+            self.proxmox = ProxmoxAPI(
+                    config["host"],
+                    port=config["port"],
+                    user=config["user"],
+                    token_name=config["token_name"],
+                    token_value=config["token_secret"],
+                    backend="https",
+                    verify_ssl=False,
+                    )
+        else:
+            self.proxmox = ProxmoxAPI(
+                    config["host"],
+                    port=config["port"],
+                    user=config["user"],
+                    password=config["password"],
+                    backend="https",
+                    verify_ssl=False,
+                    )
 
     # Get various useful sum.
     def get_totals(self):

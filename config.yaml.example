@@ -2,8 +2,13 @@ infra_lock_file: /tmp/infmgr.lock
 
 # Proxmox API details
 host: proxmox.example.com
+# port: 8006
 user: api@pve
 password: verysecure
+
+# Use a token instead of a password for authentication
+# token_name: name
+# token_secret: 000-000-...
 
 # Current = Determine load based on current resource usage
 # Max = Determine load based on maximum assigned resource
